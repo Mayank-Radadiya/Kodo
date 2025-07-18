@@ -5,6 +5,11 @@ import { Suspense } from "react";
 
 export default function Home() {
   const queryClient = getQueryClient();
+  void queryClient.prefetchQuery(
+    trpc.hello.queryOptions({
+      text: "Hello world from Server!",
+    })
+  );
 
   return (
     <>
