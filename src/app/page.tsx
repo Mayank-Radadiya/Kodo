@@ -18,8 +18,11 @@ export default function Home() {
 
   return (
     <>
-      <div>
-        <input onChange={(e) => setValue(e.target.value)} />
+      <div className="flex flex-col items-center justify-center">
+        <input
+          onChange={(e) => setValue(e.target.value)}
+          className="border w-[500px] rounded-xl p-2 mb-4 mt-5"
+        />
         <button
           disabled={invoke.isPending}
           onClick={() => invoke.mutate({ input: value })}
