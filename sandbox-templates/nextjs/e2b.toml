@@ -1,0 +1,17 @@
+# This is a config for E2B sandbox template.
+# You can use template ID (9rd6zgxukfgovyjaxno1) or template name (kodo-nextjs-02) to create a sandbox:
+
+# Python SDK
+# from e2b import Sandbox, AsyncSandbox
+# sandbox = Sandbox("kodo-nextjs-02") # Sync sandbox
+# sandbox = await AsyncSandbox.create("kodo-nextjs-02") # Async sandbox
+
+# JS SDK
+# import { Sandbox } from 'e2b'
+# const sandbox = await Sandbox.create('kodo-nextjs-02')
+
+team_id = "8e139350-925a-46e7-9c1d-1b25e49bfffe"
+start_cmd = "/compile_page.sh"
+dockerfile = "e2b.Dockerfile"
+template_name = "kodo-nextjs-02"
+template_id = "9rd6zgxukfgovyjaxno1"
