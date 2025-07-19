@@ -1,23 +1,32 @@
-import { getQueryClient, trpc } from "@/trpc/server";
-import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
-import Client from "./Client";
-import { Suspense } from "react";
+"use client";
+
+import { useTRPC } from "@/trpc/client";
+import { useMutation } from "@tanstack/react-query";
+import { useState } from "react";
 
 export default function Home() {
-  const queryClient = getQueryClient();
-  void queryClient.prefetchQuery(
-    trpc.hello.queryOptions({
-      text: "Hello world from Server!",
+  const [value, setValue] = useState("");
+
+  const trpc = useTRPC();
+  const invoke = useMutation(
+    trpc.invoke.mutationOptions({
+      onSuccess: (data) => {
+        console.log("Response:", data);
+      },
     })
   );
 
   return (
     <>
-      <HydrationBoundary state={dehydrate(queryClient)}>
-        <Suspense fallback={<div>Loading...</div>}>
-          <Client />
-        </Suspense>
-      </HydrationBoundary>
+      <div>
+        <input onChange={(e) => setValue(e.target.value)} />
+        <button
+          disabled={invoke.isPending}
+          onClick={() => invoke.mutate({ input: value })}
+        >
+          {invoke.isPending ? "Loading..." : "Invoke Inngest Function"}
+        </button>
+      </div>
     </>
   );
 }
