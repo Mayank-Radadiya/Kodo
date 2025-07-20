@@ -21,7 +21,6 @@
     "clsx": "^2.1.1",
     "global": "^4.4.0",
     "inngest": "^3.40.1",
-    "inngest-cli": "^1.9.0",
     "lucide-react": "^0.525.0",
     "next": "15.3.4",
     "prisma": "^6.10.1",
@@ -40,8 +39,12 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "15.3.4",
+    "inngest-cli": "^1.9.1",
     "tailwindcss": "^4",
     "tw-animate-css": "^1.3.4",
     "typescript": "^5"
-  }
+  },
+  "trustedDependencies": [
+    "inngest-cli"
+  ]
 }

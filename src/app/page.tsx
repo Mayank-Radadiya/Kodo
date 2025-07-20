@@ -6,6 +6,7 @@ import { useState } from "react";
 
 export default function Home() {
   const [value, setValue] = useState("");
+  const [framework, setFramework] = useState("nextjs");
 
   const trpc = useTRPC();
   const invoke = useMutation(
@@ -18,14 +19,31 @@ export default function Home() {
 
   return (
     <>
-      <div className="flex flex-col items-center justify-center">
+      <div className="flex flex-col items-center justify-center bg-zinc-800 text-white h-screen">
+        <div className="flex items-center mb-4 mt-5">
+          <label htmlFor="framework" className="mr-2">
+            Framework:
+          </label>
+          <select
+            id="framework"
+            value={framework}
+            onChange={(e) => setFramework(e.target.value)}
+            className="border rounded-xl p-2"
+          >
+            <option value="nextjs">Next.js</option>
+            <option value="react">React</option>
+            <option value="html">HTML/CSS/JS</option>
+            <option value="vue">Vue</option>
+            <option value="svelte">Svelte</option>
+          </select>
+        </div>
         <input
           onChange={(e) => setValue(e.target.value)}
-          className="border w-[500px] rounded-xl p-2 mb-4 mt-5"
+          className="border w-[500px] rounded-xl p-2 mb-4"
         />
         <button
           disabled={invoke.isPending}
-          onClick={() => invoke.mutate({ input: value })}
+          onClick={() => invoke.mutate({ input: value, framework })}
         >
           {invoke.isPending ? "Loading..." : "Invoke Inngest Function"}
         </button>
