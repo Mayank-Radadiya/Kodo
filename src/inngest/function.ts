@@ -3,12 +3,19 @@ import {
   createAgent,
   createTool,
   createNetwork,
+  type Tool,
 } from "@inngest/agent-kit";
 import { inngest } from "./client";
 import { Sandbox } from "@e2b/code-interpreter";
 import { getSandbox, lastAssistantTextMessageContent } from "./utils";
 import z from "zod";
 import { PROMPT } from "@/lib/prompt";
+import prisma from "@/lib/prisma";
+
+interface AgentState {
+  summary: string;
+  files: { [path: string]: string };
+}
 
 // Helper for consistent error handling
 const handleError = (
@@ -24,9 +31,9 @@ const handleError = (
   return `${context}: ${error} \n stdout: ${stdout} \n stderr: ${stderr}`;
 };
 
-export const helloWorld = inngest.createFunction(
-  { id: "hello-world" },
-  { event: "test/hello.world" },
+export const codeAgentFunction = inngest.createFunction(
+  { id: "code-agent" },
+  { event: "code-agent/run" },
   async ({
     event,
     step,
@@ -43,7 +50,7 @@ export const helloWorld = inngest.createFunction(
     });
 
     // Coding agent setup
-    const codingAgent = createAgent({
+    const codingAgent = createAgent<AgentState>({
       name: "coding-agent",
       description: "An expert coding agent that can help with coding tasks",
       system: PROMPT,
@@ -85,7 +92,7 @@ export const helloWorld = inngest.createFunction(
           parameters: z.object({
             files: z.array(z.object({ path: z.string(), content: z.string() })),
           }),
-          handler: async ({ files }, { step, network }) => {
+          handler: async ({ files }, { step, network }: Tool.Options<AgentState>) => {
             const newFile = await step?.run("createOrUpdateFile", async () => {
               try {
                 const updateFile: Record<string, string> =
@@ -143,13 +150,13 @@ export const helloWorld = inngest.createFunction(
     });
 
     // Create network for agent
-    const network = createNetwork({
+    const network = createNetwork<AgentState>({
       name: "coding-agent-network",
       agents: [codingAgent],
       maxIter: 7, // Lowered to avoid excessive loops
       router: async ({ network }) => {
         const summary = network.state.data.summary;
-        return summary || codingAgent;
+        return summary ? undefined : codingAgent;
       },
     });
 
@@ -175,9 +182,13 @@ export const helloWorld = inngest.createFunction(
 
     const startTime = Date.now();
     const result = await runWithTimeout(
-      network.run(`framework: ${event.data.framework}\n\n${event.data.input}`),
+      network.run(`Input:  ${event.data.input}`),
       120000 // 2 minute timeout
     );
+    const isError =
+      !result.state.data.summary ||
+      Object.keys(result.state.data.files || {}).length === 0;
+
     const duration = Date.now() - startTime;
     console.log(`Agent network run duration: ${duration}ms`);
 
@@ -186,6 +197,34 @@ export const helloWorld = inngest.createFunction(
       const sandbox = await getSandbox(sandboxId);
       const host = sandbox.getHost(3000);
       return `https://${host}`;
+    });
+
+    await step.run("save-result", async () => {
+      // If there was an error, log it and return a default message
+      if (isError) {
+        return await prisma.message.create({
+          data: {
+            content: "Error occurred while processing request",
+            role: "ASSISTANT",
+            type: "ERROR",
+          },
+        });
+      }
+
+      return await prisma.message.create({
+        data: {
+          content: result.state.data.summary || "Generated code fragment",
+          role: "ASSISTANT",
+          type: "RESULT",
+          fragments: {
+            create: {
+              sandboxUrl: sandboxUrl,
+              title: "Fragment",
+              files: result.state.data.files,
+            },
+          },
+        },
+      });
     });
 
     // Return result object
