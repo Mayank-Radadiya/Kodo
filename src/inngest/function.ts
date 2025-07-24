@@ -92,7 +92,10 @@ export const codeAgentFunction = inngest.createFunction(
           parameters: z.object({
             files: z.array(z.object({ path: z.string(), content: z.string() })),
           }),
-          handler: async ({ files }, { step, network }: Tool.Options<AgentState>) => {
+          handler: async (
+            { files },
+            { step, network }: Tool.Options<AgentState>
+          ) => {
             const newFile = await step?.run("createOrUpdateFile", async () => {
               try {
                 const updateFile: Record<string, string> =
@@ -205,6 +208,7 @@ export const codeAgentFunction = inngest.createFunction(
         return await prisma.message.create({
           data: {
             content: "Error occurred while processing request",
+            projectId: event.data.projectId,
             role: "ASSISTANT",
             type: "ERROR",
           },
@@ -214,6 +218,7 @@ export const codeAgentFunction = inngest.createFunction(
       return await prisma.message.create({
         data: {
           content: result.state.data.summary || "Generated code fragment",
+          projectId: event.data.projectId,
           role: "ASSISTANT",
           type: "RESULT",
           fragments: {

@@ -1,18 +1,19 @@
 "use client";
 
 import { useTRPC } from "@/trpc/client";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export default function Home() {
+  const router = useRouter();
   const [value, setValue] = useState("");
 
   const trpc = useTRPC();
-  const { data: Messages } = useQuery(trpc.message.getMany.queryOptions());
   const invoke = useMutation(
-    trpc.message.create.mutationOptions({
+    trpc.projects.create.mutationOptions({
       onSuccess: (data) => {
-        console.log("Response:", data);
+        router.push(`/projects/${data.id}`);
       },
     })
   );
@@ -26,12 +27,11 @@ export default function Home() {
         />
         <button
           disabled={invoke.isPending}
+          className="bg-blue-500 text-white px-4 py-2 rounded-lg disabled:opacity-50"
           onClick={() => invoke.mutate({ value: value })}
         >
           {invoke.isPending ? "Loading..." : "Invoke Inngest Function"}
         </button>
-
-        {JSON.stringify(Messages, null, 2)}
       </div>
     </>
   );
